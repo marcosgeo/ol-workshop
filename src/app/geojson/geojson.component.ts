@@ -4,6 +4,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import GeoJSON from 'ol/format/GeoJSON';
 import DragAndDrop from 'ol/interaction/DragAndDrop';
+import Draw from 'ol/interaction/Draw';
 import Link from 'ol/interaction/Link';
 import Modify from 'ol/interaction/Modify';
 import VectorLayer from 'ol/layer/Vector';
@@ -52,6 +53,14 @@ export class GeojsonComponent implements AfterViewInit {
     // allows features editing
     this.map.addInteraction(
       new Modify({
+        source: source,
+      })
+    );
+
+    // allows draw new features
+    this.map.addInteraction(
+      new Draw({
+        type: 'Polygon',
         source: source,
       })
     );
