@@ -7,6 +7,7 @@ import DragAndDrop from 'ol/interaction/DragAndDrop';
 import Draw from 'ol/interaction/Draw';
 import Link from 'ol/interaction/Link';
 import Modify from 'ol/interaction/Modify';
+import Snap from 'ol/interaction/Snap';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 
@@ -61,6 +62,13 @@ export class GeojsonComponent implements AfterViewInit {
     this.map.addInteraction(
       new Draw({
         type: 'Polygon',
+        source: source,
+      })
+    );
+
+    // allows snap features during editing
+    this.map.addInteraction(
+      new Snap({
         source: source,
       })
     );
