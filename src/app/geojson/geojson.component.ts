@@ -3,8 +3,9 @@ import { Component, AfterViewInit } from '@angular/core';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import GeoJSON from 'ol/format/GeoJSON';
-import Link from 'ol/interaction/Link';
 import DragAndDrop from 'ol/interaction/DragAndDrop';
+import Link from 'ol/interaction/Link';
+import Modify from 'ol/interaction/Modify';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 
@@ -23,7 +24,7 @@ export class GeojsonComponent implements AfterViewInit {
   }
 
   initMap(): void {
-    const source: VectorSource = new VectorSource();
+    let source: VectorSource = new VectorSource();
     const layer: VectorLayer<VectorSource> = new VectorLayer({
       source: source,
     });
@@ -45,6 +46,13 @@ export class GeojsonComponent implements AfterViewInit {
       new DragAndDrop({
         source: source,
         formatConstructors: [GeoJSON],
+      })
+    );
+
+    // allows features editing
+    this.map.addInteraction(
+      new Modify({
+        source: source,
       })
     );
   }
