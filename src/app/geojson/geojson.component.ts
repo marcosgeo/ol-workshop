@@ -17,18 +17,20 @@ import VectorSource from 'ol/source/Vector';
   styleUrls: ['./geojson.component.css'],
 })
 export class GeojsonComponent implements AfterViewInit {
-  map?: Map;
+  downloadUrl?: string;
+  private map?: Map;
+  private source: VectorSource = new VectorSource();
 
   constructor() {}
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.prepareDownload();
   }
 
   initMap(): void {
-    let source: VectorSource = new VectorSource();
     const layer: VectorLayer<VectorSource> = new VectorLayer({
-      source: source,
+      source: this.source,
     });
 
     this.map = new Map({
@@ -46,7 +48,7 @@ export class GeojsonComponent implements AfterViewInit {
     this.map.addLayer(layer);
     this.map.addInteraction(
       new DragAndDrop({
-        source: source,
+        source: this.source,
         formatConstructors: [GeoJSON],
       })
     );
@@ -54,7 +56,7 @@ export class GeojsonComponent implements AfterViewInit {
     // allows features editing
     this.map.addInteraction(
       new Modify({
-        source: source,
+        source: this.source,
       })
     );
 
@@ -62,15 +64,31 @@ export class GeojsonComponent implements AfterViewInit {
     this.map.addInteraction(
       new Draw({
         type: 'Polygon',
-        source: source,
+        source: this.source,
       })
     );
 
     // allows snap features during editing
     this.map.addInteraction(
       new Snap({
-        source: source,
+        source: this.source,
       })
     );
+  }
+
+  clearEditing(): void {
+    this.source.clear();
+  }
+
+  // listen for updates on vector layer and updates the download url
+  prepareDownload(): void {
+    const that = this; // preserves this on other name
+    const format = new GeoJSON({ featureProjection: 'EPSG:3857' });
+    this.source.on('change', function () {
+      const features = that.source.getFeatures();
+      const json = format.writeFeatures(features);
+      that.downloadUrl =
+        'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+    });
   }
 }

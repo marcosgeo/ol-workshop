@@ -1,1 +1,9 @@
-<div id="map-container"></div>
+<div>
+  <div id="tools">
+    <a id="clear" (click)="clearEditing()">Clear</a>
+    <a id="download" download="features.json" href="{{ downloadUrl }}"
+      >Download</a
+    >
+  </div>
+  <div id="map-container"></div>
+</div>
