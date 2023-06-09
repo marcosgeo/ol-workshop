@@ -10,6 +10,10 @@ import Modify from 'ol/interaction/Modify';
 import Snap from 'ol/interaction/Snap';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
+import { Style, Fill, Stroke } from 'ol/style';
+import { getArea } from 'ol/sphere';
+
+import colormap from 'colormap';
 
 @Component({
   selector: 'app-geojson',
@@ -19,6 +23,7 @@ import VectorSource from 'ol/source/Vector';
 export class GeojsonComponent implements AfterViewInit {
   downloadUrl?: string;
   private map?: Map;
+  private colorByArea?: any;
   private source: VectorSource = new VectorSource();
 
   constructor() {}
@@ -26,11 +31,29 @@ export class GeojsonComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.initMap();
     this.prepareDownload();
+    this.defineColorByArea();
   }
 
   initMap(): void {
+    const that = this; // preserves this in other name
     const layer: VectorLayer<VectorSource> = new VectorLayer({
       source: this.source,
+    });
+    const countries: VectorLayer<VectorSource> = new VectorLayer({
+      source: new VectorSource({
+        format: new GeoJSON(),
+        url: '../../assets/data/countries.json',
+      }),
+      style: function (feature) {
+        return new Style({
+          fill: new Fill({
+            color: that.colorByArea(feature),
+          }),
+          stroke: new Stroke({
+            color: 'rgba(255,255,255,0.8)',
+          }),
+        });
+      },
     });
 
     this.map = new Map({
@@ -40,6 +63,7 @@ export class GeojsonComponent implements AfterViewInit {
         zoom: 2,
       }),
     });
+    this.map.addLayer(countries);
 
     // creates a url link at map center to reload at the last place
     this.map.addInteraction(new Link());
@@ -90,5 +114,28 @@ export class GeojsonComponent implements AfterViewInit {
       that.downloadUrl =
         'data:application/json;charset=utf-8,' + encodeURIComponent(json);
     });
+  }
+
+  // sets the color index based on an area factor to color a polygon
+  defineColorByArea() {
+    const min = 1e8; // the smallest area
+    const max = 2e13; // the biggest area
+    const steps = 50;
+    const ramp = colormap({
+      colormap: 'blackbody',
+      nshades: steps,
+    });
+
+    const clamp = function (value: number, low: number, high: number) {
+      return Math.max(low, Math.min(value, high));
+    };
+
+    this.colorByArea = function (feature: any) {
+      const area = getArea(feature.getGeometry());
+      const f = Math.pow(clamp((area - min) / (max - min), 0, 1), 1 / 2);
+      const index = Math.round(f * (steps - 1));
+      console.log('colorByArea', ramp[index]);
+      return ramp[index];
+    };
   }
 }
