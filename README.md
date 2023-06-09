@@ -1,4 +1,5 @@
-# OlWorkshop
+# OpenLayers Workshop
+This is an Angular version of the [https://openlayers.org/workshop/en/](https://openlayers.org/workshop/en/)
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.0.4.
 
