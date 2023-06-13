@@ -1,9 +1,15 @@
 import { Component, AfterViewInit } from '@angular/core';
 
 import { Map, View } from 'ol';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
+import { circular } from 'ol/geom/Polygon';
 import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM';
+import VectorSource from 'ol/source/Vector';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-mobile',
@@ -12,14 +18,19 @@ import OSM from 'ol/source/OSM';
 })
 export class MobileComponent implements AfterViewInit {
   map?: Map;
+  private gpsSource: VectorSource = new VectorSource();
 
   constructor() {}
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.getCurrentPosition();
   }
 
   initMap() {
+    const gpsLayer = new VectorLayer({
+      source: this.gpsSource,
+    });
     this.map = new Map({
       target: 'map-container',
       layers: [
@@ -32,5 +43,31 @@ export class MobileComponent implements AfterViewInit {
         zoom: 5,
       }),
     });
+    this.map.addLayer(gpsLayer);
+  }
+
+  getCurrentPosition(): void {
+    console.log('getCurrentPosition was called');
+    const that = this; // preserves this on other name
+    window.navigator.geolocation.watchPosition(
+      (pos: any) => {
+        console.log(`watching ${pos}`);
+        const coords = [pos.coords.longitude, pos.coords.latitude];
+        const accuracy = circular(coords, pos.coords.accuracy);
+        that.gpsSource.clear(true);
+        that.gpsSource.addFeatures([
+          new Feature(
+            accuracy.transform('EPSG:4326', that.map?.getView().getProjection())
+          ),
+          new Feature(new Point(fromLonLat(coords))),
+        ]);
+      },
+      function (error: any) {
+        alert(`Error: ${error.message}`);
+      },
+      {
+        enableHighAccuracy: true,
+      }
+    );
   }
 }
