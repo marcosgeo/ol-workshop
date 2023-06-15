@@ -1,6 +1,7 @@
 import { Component, AfterViewInit } from '@angular/core';
 
 import { Map, View } from 'ol';
+import Control from 'ol/control/Control';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { circular } from 'ol/geom/Polygon';
@@ -9,7 +10,6 @@ import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM';
 import VectorSource from 'ol/source/Vector';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-mobile',
@@ -25,6 +25,7 @@ export class MobileComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.initMap();
     this.getCurrentPosition();
+    this.centerOnClick();
   }
 
   initMap() {
@@ -69,5 +70,25 @@ export class MobileComponent implements AfterViewInit {
         enableHighAccuracy: true,
       }
     );
+  }
+
+  centerOnClick() {
+    const that = this;
+    const locate = document.createElement('div');
+    locate.className = 'ol-control ol-unselectable locate';
+    locate.innerHTML = '<button title="Locate me">ø</button>';
+    locate.addEventListener('click', function () {
+      if (!that.gpsSource.isEmpty()) {
+        that.map?.getView().fit(that.gpsSource.getExtent(), {
+          maxZoom: 18,
+          duration: 500,
+        });
+      }
+    });
+    that.map?.addControl(new Control({ element: locate }));
+    const control = document.getElementsByClassName(
+      'ol-zoom ol-unselectable ol-control'
+    );
+    control[0].appendChild(locate);
   }
 }
