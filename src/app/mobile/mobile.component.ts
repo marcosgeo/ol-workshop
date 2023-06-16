@@ -1,5 +1,6 @@
 import { Component, AfterViewInit } from '@angular/core';
 
+import kompas from 'kompas';
 import { Map, View } from 'ol';
 import Control from 'ol/control/Control';
 import Feature from 'ol/Feature';
@@ -10,6 +11,7 @@ import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM';
 import VectorSource from 'ol/source/Vector';
+import { Fill, Icon, Style } from 'ol/style';
 
 @Component({
   selector: 'app-mobile',
@@ -19,6 +21,8 @@ import VectorSource from 'ol/source/Vector';
 export class MobileComponent implements AfterViewInit {
   map?: Map;
   private gpsSource: VectorSource = new VectorSource();
+  private gpsStyle?: Style;
+  private locate?: any;
 
   constructor() {}
 
@@ -26,12 +30,15 @@ export class MobileComponent implements AfterViewInit {
     this.initMap();
     this.getCurrentPosition();
     this.centerOnClick();
+    this.setGpsStyle();
+    this.compasInitialization();
   }
 
   initMap() {
     const gpsLayer = new VectorLayer({
       source: this.gpsSource,
     });
+    gpsLayer.setStyle(this.gpsStyle);
     this.map = new Map({
       target: 'map-container',
       layers: [
@@ -45,6 +52,20 @@ export class MobileComponent implements AfterViewInit {
       }),
     });
     this.map.addLayer(gpsLayer);
+  }
+
+  setGpsStyle(): void {
+    const style = new Style({
+      fill: new Fill({
+        color: 'rgba(0, 0, 255, 0.2)',
+      }),
+      image: new Icon({
+        src: '../../assets/data/location-heading.svg',
+        imgSize: [27, 55],
+        rotateWithView: true,
+      }),
+    });
+    this.gpsStyle = style;
   }
 
   getCurrentPosition(): void {
@@ -90,5 +111,34 @@ export class MobileComponent implements AfterViewInit {
       'ol-zoom ol-unselectable ol-control'
     );
     control[0].appendChild(locate);
+    this.locate = locate;
+  }
+
+  compasInitialization(): void {
+    const that = this;
+    const startCompass = function (): void {
+      kompas()
+        .watch()
+        .on('heading', function (heading: number) {
+          that.gpsStyle?.getImage().setRotation((Math.PI / 180) * heading);
+        });
+    };
+    if (
+      window.DeviceOrientationEvent &&
+      typeof (DeviceOrientationEvent as any).requestPermission == 'function'
+    ) {
+      that.locate.addEventListener('click', function () {
+        (DeviceOrientationEvent as any)
+          .requestPermission()
+          .then(startCompass)
+          .catch(function (error: any) {
+            alert(`ERROR: ${error.message}`);
+          });
+      });
+    } else if ('ondeviceorientationabsolute' in window) {
+      startCompass();
+    } else {
+      alert('No device orientation provided by device');
+    }
   }
 }
